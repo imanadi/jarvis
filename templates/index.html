@@ -23,6 +23,14 @@
   {% if result %}
   <p class="result">{{ result }}</p>
   {% endif %}
+  <div class="conversation-history">
+    <h4>Conversation History:</h4>
+    <ul>
+      {% for message in conversation_history %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  </div>
 </body>
 
 </html>

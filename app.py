@@ -5,23 +5,35 @@ from flask import Flask, redirect, render_template, request, url_for
 app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+conversation_history = []
 
 @app.route("/", methods=("GET", "POST"))
 def index():
+    global conversation_history
+
     if request.method == "POST":
         question = request.form["question"]
+
+        # Adding user message to conversation history
+        conversation_history.append({"role": "user", "content": question})
+
+        # Creating a message list for API input
+        messages = [{"role": "system", "content": loadInfo()}]
+        messages.extend(conversation_history)
+
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": loadInfo()},
-                {"role": "user", "content": question}
-            ]
+            messages=messages
         )
-        response_text = response.choices[0].message["content"].strip()
-        return redirect(url_for("index", result=response_text))
+
+        # Adding AI response to conversation history
+        ai_response = response.choices[0].message["content"].strip()
+        conversation_history.append({"role": "assistant", "content": ai_response})
+
+        return redirect(url_for("index", result=ai_response))
 
     result = request.args.get("result")
-    return render_template("index.html", result=result)
+    return render_template("index.html", result=result, conversation_history=conversation_history)
 
 
 if __name__ == "__main__":
@@ -30,8 +42,8 @@ if __name__ == "__main__":
 
 def loadInfo():
     return """
-    From now on you are my personal assistant Jarvis.
-    You have to answer my queries in less than 25 wordsconsidering my personallity and preferences. 
+    From now on, you are my personal assistant Jarvis.
+    You have to answer my queries in less than 25 words considering my personality and preferences. 
     I am Tony, a young software developer who likes correct and concise unfiltered answers. 
     I am into fitness, music, technology, and science.
     """
