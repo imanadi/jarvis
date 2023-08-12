@@ -2,6 +2,8 @@ import os
 import openai
 from flask import Flask, redirect, render_template, request, url_for
 
+from details import name, personalDetails
+
 app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -33,7 +35,13 @@ def index():
         return redirect(url_for("index", result=ai_response))
 
     result = request.args.get("result")
-    return render_template("index.html", result=result, conversation_history=conversation_history)
+    # Format conversation history for human readability
+    formatted_conversation = []
+    for message in conversation_history:
+        role = name() if message["role"] == "user" else "Jarvis"
+        formatted_conversation.append(f"{role}: {message['content']}")
+
+    return render_template("index.html", result=result, conversation_history=formatted_conversation)
 
 
 if __name__ == "__main__":
@@ -44,6 +52,4 @@ def loadInfo():
     return """
     From now on, you are my personal assistant Jarvis.
     You have to answer my queries in less than 25 words considering my personality and preferences. 
-    I am Tony, a young software developer who likes correct and concise unfiltered answers. 
-    I am into fitness, music, technology, and science.
-    """
+    """ + personalDetails()
